@@ -1,3 +1,5 @@
+![Keyboardmania Controller](https://github.com/has207/keyboardmania-midi-bridge/blob/ccfd1e9755eed3977eefdcadd358b050256f27e0/keyboardmania.jpg)
+
 # keyboardmania-midi-bridge
 Allows Keyboardmania USB controller (Model RU025) for Playstation 2 to be used as a MIDI device on PC.
 
