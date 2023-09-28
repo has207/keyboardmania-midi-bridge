@@ -49,7 +49,7 @@ B4:     00 00 00 10
 
 ## Prerequisites
 This program does not provide a MIDI interface directly but rather talks to an existing MIDI device. As a result, you will need to also
-install a loopback MIDI driver, such as loopMIDI [https://www.tobias-erichsen.de/software/loopmidi.html] or loopBE1 [https://www.nerds.de/en/loopbe1.html].
+install a loopback MIDI driver, such as [loopMIDI](https://www.tobias-erichsen.de/software/loopmidi.html) or [loopBE1](https://www.nerds.de/en/loopbe1.html).
 I only tested loopMIDI so will describe what you need in terms of that particular program.
 
 ## Running
@@ -66,3 +66,8 @@ Select/Start and Wheel motions are programmed to send different MIDI control mes
 
 You can also run with -v flag for verbose, and the program will print key presses/releases to the console. This is disabled by default to minimize
 latency but it's a cheap enough operation that I doubt it adds much delay.
+
+## Building source
+The program relies on [hidapi](https://github.com/signal11/hidapi) and [rtmidi](https://github.com/thestk/rtmidi) libraries. Both of those need to
+be built separately and your project will need to ensure it's linking against hidapi.lib and rtmidi.lib as well as can see their respective
+includes.
