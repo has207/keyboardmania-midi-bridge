@@ -1,11 +1,16 @@
 #include <windows.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <conio.h>
 #include "hidapi.h"
 #include <rtmidi.h>
+#include <atomic>
 #include <map>
+#include <thread>
 
 #define MAX_STR 255
+
+std::atomic<int8_t> pitch_shift(0);
 
 typedef struct {
 	unsigned char byteIndex;
@@ -79,6 +84,39 @@ std::map<uint32_t, uint8_t> NOTE_MAPPINGS = {
 	{0x00000010, 71}  // B4
 };
 
+void consoleReader() {
+	printf("[Use arrow keys to shift octaves and 'q' to exit]\n");
+	while (true) {
+		char ch = _getch();
+		switch (ch) {
+		case 75:  // Left arrow key
+			if (pitch_shift > -4) {
+				pitch_shift--;
+				printf("Pitch shift down\n");
+			}
+			else {
+				printf("Cannot shift lower\n");
+			}
+			break;
+		case 77:  // Right arrow key
+			if (pitch_shift < 4) {
+				printf("Pitch shift up\n");
+				pitch_shift++;
+			}
+			else {
+				printf("Cannot shift higher\n");
+			}
+			break;
+		case '-':
+			printf("Resetting pitch to default\n");
+			pitch_shift = 0;
+			break;
+		case 'q':
+			printf("Exiting...\n");
+			exit(0);
+		}
+	}
+}
 
 void printPressedKeys(const unsigned char* buffer) {
 	printf("[ ");
@@ -185,6 +223,9 @@ int main_loop(bool verbose)
 	printf("Ready...\n");
 	uint32_t prevState = 0;
 
+	// Start the console reader thread.
+	std::thread readerThread(consoleReader);
+
 	while (true) {
 		res = hid_read_timeout(handle, buf, sizeof(buf), 1000);
 		if (res < 0) {
@@ -201,7 +242,7 @@ int main_loop(bool verbose)
 
 			for (auto& mapping : NOTE_MAPPINGS) {
 				uint32_t mask = mapping.first;
-				uint8_t midiNote = mapping.second;
+				uint8_t midiNote = mapping.second + pitch_shift * 12;
 				uint8_t msg_type = mapping.second < 5 ? 0xB0 : 0x90;  // send control messages for buttons, notes for keys
 				// Note-on event
 				if ((state & mask) && !(prevState & mask)) {
@@ -226,11 +267,12 @@ int main_loop(bool verbose)
 
 	midiout->closePort();
 	delete midiout;
-
+	readerThread.join();
 	return 0;
 }
 
 int main(int argc, char* argv[]) {
+
 	bool verbose = false;
 
 	// Loop through all command line arguments
@@ -244,6 +286,8 @@ int main(int argc, char* argv[]) {
 			return 1;
 		}
 	}
+
 	while (true)
 		main_loop(verbose);
+
 }
