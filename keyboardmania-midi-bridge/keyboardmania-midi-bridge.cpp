@@ -11,6 +11,7 @@
 #define MAX_STR 255
 
 std::atomic<int8_t> pitch_shift(0);
+std::atomic<bool> should_exit(false);
 
 typedef struct {
 	unsigned char byteIndex;
@@ -86,34 +87,39 @@ std::map<uint32_t, uint8_t> NOTE_MAPPINGS = {
 
 void consoleReader() {
 	printf("[Use arrow keys to shift octaves and 'q' to exit]\n");
-	while (true) {
-		char ch = _getch();
-		switch (ch) {
-		case 75:  // Left arrow key
-			if (pitch_shift > -4) {
-				pitch_shift--;
-				printf("Pitch shift down\n");
+	while (!should_exit.load()) {
+		if (_kbhit()) {
+			char ch = _getch();
+			switch (ch) {
+			case 75:  // Left arrow key
+				if (pitch_shift > -4) {
+					pitch_shift--;
+					printf("Pitch shift down\n");
+				}
+				else {
+					printf("Cannot shift lower\n");
+				}
+				break;
+			case 77:  // Right arrow key
+				if (pitch_shift < 4) {
+					printf("Pitch shift up\n");
+					pitch_shift++;
+				}
+				else {
+					printf("Cannot shift higher\n");
+				}
+				break;
+			case '-':
+				printf("Resetting pitch to default\n");
+				pitch_shift = 0;
+				break;
+			case 'q':
+				printf("Exiting...\n");
+				exit(0);
 			}
-			else {
-				printf("Cannot shift lower\n");
-			}
-			break;
-		case 77:  // Right arrow key
-			if (pitch_shift < 4) {
-				printf("Pitch shift up\n");
-				pitch_shift++;
-			}
-			else {
-				printf("Cannot shift higher\n");
-			}
-			break;
-		case '-':
-			printf("Resetting pitch to default\n");
-			pitch_shift = 0;
-			break;
-		case 'q':
-			printf("Exiting...\n");
-			exit(0);
+		}
+		else {
+			std::this_thread::sleep_for(std::chrono::milliseconds(100));
 		}
 	}
 }
@@ -222,7 +228,7 @@ int main_loop(bool verbose)
 	get_midi_port(midiout);
 	printf("Ready...\n");
 	uint32_t prevState = 0;
-
+	should_exit.store(false);
 	// Start the console reader thread.
 	std::thread readerThread(consoleReader);
 
@@ -230,6 +236,7 @@ int main_loop(bool verbose)
 		res = hid_read_timeout(handle, buf, sizeof(buf), 1000);
 		if (res < 0) {
 			printf("Keyboard disconnected?\n");
+			should_exit.store(true);
 			break;
 		}
 		rotate_left(buf, sizeof(buf));
