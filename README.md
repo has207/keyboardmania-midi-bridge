@@ -67,6 +67,8 @@ Select/Start and Wheel motions are programmed to send different MIDI control mes
 You can also run with -v flag for verbose, and the program will print key presses/releases to the console. This is disabled by default to minimize
 latency but it's a cheap enough operation that I doubt it adds much delay.
 
+You can change the pitch of the keys being sent by octave up or down using left and right arrow keys while the program is running. Reset to default (C3/C4) with minus (-) key, and quit the program with 'q'.
+
 ## Building source
 The program relies on [hidapi](https://github.com/signal11/hidapi) and [rtmidi](https://github.com/thestk/rtmidi) libraries. Both of those need to
 be built separately and your project will need to ensure it's linking against hidapi.lib and rtmidi.lib as well as can see their respective
