@@ -249,8 +249,11 @@ int main_loop(bool verbose)
 
 			for (auto& mapping : NOTE_MAPPINGS) {
 				uint32_t mask = mapping.first;
-				uint8_t midiNote = mapping.second + pitch_shift * 12;
+				uint8_t midiNote = mapping.second;
 				uint8_t msg_type = mapping.second < 5 ? 0xB0 : 0x90;  // send control messages for buttons, notes for keys
+				if (msg_type == 0x90) {
+					midiNote += pitch_shift.load() * 12;
+				}
 				// Note-on event
 				if ((state & mask) && !(prevState & mask)) {
 					std::vector<uint8_t> message = { msg_type, midiNote, 64 };  // channel 1, note-on with velocity 64
